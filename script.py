@@ -1,4 +1,5 @@
 from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
 
 
@@ -8,6 +9,8 @@ httpuser = input('Enter the HTTP Basic Auth username > ')
 httppass = input('Enter the HTTP Basic Auth password > ')
 username = input('Enter your login username > ')
 password = input('Enter your login password > ')
+datefrom = input('Enter the fromDate (format: YYYYMMDD) > ')
+dateto   = input('Enter the toDate (format: YYYYMMDD) > ')
 URL = BASEURL.format(username=httpuser, password=httppass)
 
 driver.get(URL)
@@ -27,8 +30,8 @@ Generating report.
 driver.get('https://myhomelivingcare.supportability.com.au/system/inc/custom/reports/activityScheduleReport.php')
 fromDate = driver.find_element_by_id("fromDate")
 toDate = driver.find_element_by_id("toDate")
-driver.execute_script("arguments[0].value = '20170901000000';", fromDate)
-driver.execute_script("arguments[0].value = '20170905000000';", toDate)
+driver.execute_script("arguments[0].value = '{}000000';".format(datefrom), fromDate)
+driver.execute_script("arguments[0].value = '{}000000';".format(dateto), toDate)
 driver.find_element_by_xpath("//select[@name='signedOffStatus']/option[@value='not signed off']").click()
 driver.find_element_by_id('activityScheduleReportSearchButton').click()
 
@@ -52,5 +55,25 @@ for id in ids:
 	url = activitypage + id
 	driver.get(url)
 
-	privatekms = driver.find_element_by_css_selector('input.privateKilometresTravelled').get_attribute('value')
-	
+	zeroprivatekms = driver.find_element_by_css_selector('input.privateKilometresTravelled').get_attribute('value') == '0.00'
+	try:
+		driver.find_element_by_css_selector('a.staffTimesheetRemoveSignoffButton')
+	except NoSuchElementException:
+		signedoff = False
+	else:
+		signedoff = True
+	try:
+		driver.find_element_by_css_selector('a[href^="journalEdit.php?id"]')
+	except NoSuchElementException:
+		hasjournal = False
+	else:
+		hasjournal = True
+
+	if zeroprivatekms and signedoff and hasjournal:
+		print('ID: ' + id  + ' meets all criteria. Signing Off.')
+		try:
+			driver.find_element_by_css_selector('a.activitySignoffButton').click()
+		except NoSuchElementException:
+			pass
+	else:
+		print('ID: ' + id + ' does not meet all criteria')
