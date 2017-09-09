@@ -1,6 +1,7 @@
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support import expected_conditions as EC
 
 
 driver = webdriver.Firefox()
@@ -23,6 +24,8 @@ pwfield = driver.find_element_by_id('password')
 pwfield.send_keys(password)
 pwfield.submit()
 
+wait = WebDriverWait(driver, 10)
+element = wait.until(EC.title_is('SupportAbility - Activity Schedule Report: '))
 
 '''
 Generating report.
@@ -71,9 +74,13 @@ for id in ids:
 
 	if zeroprivatekms and signedoff and hasjournal:
 		print('ID: ' + id  + ' meets all criteria. Signing Off.')
+		
 		try:
 			driver.find_element_by_css_selector('a.activitySignoffButton').click()
+			driver.find_element_by_id('confirmModalSuccessButton').click()
+			driver.find_element_by_css_selector('btn.btn-danger.activityRemoveSignoffButton').click()
 		except NoSuchElementException:
 			pass
+		
 	else:
 		print('ID: ' + id + ' does not meet all criteria')
